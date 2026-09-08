@@ -31,8 +31,18 @@ export default function KycCaseDetailPage({ params }: { params: { id: string } }
       : undefined;
   const canReview = can("kyc.review") && !isClosed && !escalatedBlocked;
 
+  const highRiskApprovalBlocked = kycCase.riskLevel === "HIGH" && !can("kyc.approve_high_risk");
+
   const actions: ActionDefinition[] = [
-    { key: "APPROVE", label: "Approve", tone: "primary", enabled: canReview, disabledReason: reviewDisabledReason },
+    {
+      key: "APPROVE",
+      label: "Approve",
+      tone: "primary",
+      enabled: canReview && !highRiskApprovalBlocked,
+      disabledReason:
+        reviewDisabledReason ??
+        (highRiskApprovalBlocked ? "High-risk cases can only be approved by a Manager" : undefined),
+    },
     { key: "REJECT", label: "Reject", tone: "danger", enabled: canReview, disabledReason: reviewDisabledReason },
     {
       key: "ESCALATE",

@@ -9,6 +9,7 @@ export type Permission =
   | "kyc.view"
   | "kyc.review" // approve / reject / escalate a standard case
   | "kyc.resolve_escalated" // act on a case that is already escalated
+  | "kyc.approve_high_risk" // approve a HIGH risk case
   | "kyc.reassign"
   | "refunds.view"
   | "refunds.review"
@@ -23,6 +24,7 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "kyc.view",
     "kyc.review",
     "kyc.resolve_escalated",
+    "kyc.approve_high_risk",
     "kyc.reassign",
     "refunds.view",
     "refunds.review",

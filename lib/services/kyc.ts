@@ -108,6 +108,9 @@ export function applyKycAction(
   if (current.status === "APPROVED" || current.status === "REJECTED") {
     throw new ValidationError(`Case ${caseId} is already ${current.status.toLowerCase()}`);
   }
+  if (input.action === "APPROVE" && current.riskLevel === "HIGH") {
+    requirePermission(actor, "kyc.approve_high_risk");
+  }
   if (input.action === "ESCALATE" && current.status === "ESCALATED") {
     throw new ValidationError("Case is already escalated");
   }

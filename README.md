@@ -102,6 +102,7 @@ Endpoints:
 | --- | --- | --- |
 | View queues and cases | yes | yes |
 | Approve / reject / escalate standard KYC cases | yes | yes |
+| Approve a **HIGH** risk KYC case (analysts may still reject or escalate) | no | yes |
 | Act on an **escalated** KYC case | no | yes |
 | Reassign case ownership | no | yes |
 | Review refunds | yes | yes |
