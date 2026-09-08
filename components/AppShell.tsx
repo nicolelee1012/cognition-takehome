@@ -18,13 +18,13 @@ export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="shell">
       <header className="topbar">
-        <div className="brand">
+        <Link href="/" className="brand">
           <span className="brandMark">IO</span>
           <div>
             <div className="brandName">Internal Operations Console</div>
             <div className="brandSub">Prototype · seeded data</div>
           </div>
-        </div>
+        </Link>
         <nav className="nav">
           {NAV.map((item) => (
             <Link
