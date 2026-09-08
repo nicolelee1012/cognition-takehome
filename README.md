@@ -11,7 +11,7 @@ lines, not a new platform.
 
 - Structured business data in queues and detail views (tables, search, filters, forms)
 - Business actions and simple workflows (approve / reject / escalate / reassign, each with a required reason)
-- Role-based behaviour (Analyst vs Manager) enforced in one place, server-side
+- Role capabilities are centrally defined and authorization is enforced server-side in the business service layer (Analyst vs Manager)
 - Auditability: every state change writes an audit event (actor, timestamp, action, reason)
 - A real API/service boundary — the UI never imports data or DB code
 - Reuse: a second workflow built from the same table / filter / detail / action / audit primitives
