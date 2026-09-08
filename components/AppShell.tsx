@@ -40,6 +40,8 @@ export function AppShell({ children }: { children: React.ReactNode }) {
           <span>Acting as</span>
           <select
             className="input"
+            name="actingAs"
+            id="acting-as"
             aria-label="Acting as"
             value={currentUser?.id ?? ""}
             onChange={(e) => setCurrentUserId(e.target.value)}

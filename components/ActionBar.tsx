@@ -80,6 +80,8 @@ export function ActionBar({ actions, onSubmit }: ActionBarProps) {
                 <span>{pending.extraField.label}</span>
                 <select
                   className="input"
+                  name="actionExtraValue"
+                  id="action-extra-value"
                   value={extraValue}
                   aria-label={pending.extraField.label}
                   onChange={(e) => setExtraValue(e.target.value)}
@@ -96,6 +98,8 @@ export function ActionBar({ actions, onSubmit }: ActionBarProps) {
               <span>Reason (required)</span>
               <textarea
                 className="input"
+                name="reason"
+                id="action-reason"
                 rows={4}
                 value={reason}
                 aria-label="Reason"

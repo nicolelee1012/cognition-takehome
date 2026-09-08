@@ -29,6 +29,8 @@ export function FilterBar({
       <input
         className="input searchInput"
         type="search"
+        name="search"
+        id="filter-search"
         value={search}
         placeholder={searchPlaceholder}
         aria-label="Search"
@@ -39,6 +41,8 @@ export function FilterBar({
           <span>{filter.label}</span>
           <select
             className="input"
+            name={filter.key}
+            id={`filter-${filter.key}`}
             value={filter.value}
             aria-label={filter.label}
             onChange={(e) => filter.onChange(e.target.value)}
