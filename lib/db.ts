@@ -40,22 +40,6 @@ CREATE TABLE IF NOT EXISTS refund_requests (
   original_charge_id TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS tool_requests (
-  id TEXT PRIMARY KEY,
-  title TEXT NOT NULL,
-  workflow_summary TEXT NOT NULL,
-  records TEXT NOT NULL,
-  actions TEXT NOT NULL,
-  role_notes TEXT NOT NULL,
-  status TEXT NOT NULL,
-  requested_by_id TEXT NOT NULL REFERENCES users(id),
-  created_at TEXT NOT NULL,
-  devin_session_id TEXT,
-  devin_session_url TEXT,
-  devin_status TEXT,
-  pull_request_url TEXT
-);
-
 CREATE TABLE IF NOT EXISTS audit_events (
   id TEXT PRIMARY KEY,
   entity_type TEXT NOT NULL,

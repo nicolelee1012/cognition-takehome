@@ -47,28 +47,9 @@ export interface RefundRequest {
   originalChargeId: string;
 }
 
-export type ToolRequestStatus = "DRAFT" | "DISPATCHED";
-
-export interface ToolRequest {
-  id: string;
-  title: string;
-  workflowSummary: string;
-  records: string;
-  actions: string;
-  roleNotes: string;
-  status: ToolRequestStatus;
-  requestedById: string;
-  requestedByName: string;
-  createdAt: string;
-  devinSessionId: string | null;
-  devinSessionUrl: string | null;
-  devinStatus: string | null;
-  pullRequestUrl: string | null;
-}
-
 export interface AuditEvent {
   id: string;
-  entityType: "KYC_CASE" | "REFUND_REQUEST" | "TOOL_REQUEST";
+  entityType: "KYC_CASE" | "REFUND_REQUEST";
   entityId: string;
   action: string;
   reason: string;

@@ -3,13 +3,11 @@
 A small Next.js app showing how an engineering team can build a **portfolio** of internal fintech tools
 with normal application code instead of a no-code builder.
 
-The prototype includes three workflows that share one set of primitives:
+The prototype includes two workflows that share one set of primitives:
 
 - **KYC Reviews** — queue of verification cases with risk flags and documents; approve / reject / escalate /
   reassign, each requiring a reason. High-risk cases and escalated cases need a Manager.
 - **Refunds** — approve or deny refund requests; amounts over $500 need a Manager.
-- **Tool Requests** — ops describes the next internal tool they need and a Manager hands it to Devin via the
-  Devin API, which builds it in this repo's conventions and opens a pull request.
 
 Plus, there is a cross-workflow **Audit Log**: every action is recorded with actor, timestamp, action and reason.
 
@@ -31,21 +29,17 @@ npm run build && npm start
 npm run lint
 ```
 
-Optional: to actually dispatch a tool request to Devin, copy `.env.example` to `.env.local` and set
-`DEVIN_API_KEY`. Everything else works without it.
-
 ## How it is put together
 
 ```
 app/
-  kyc/ refunds/ tools/ audit/   one directory per workflow (queue page + detail page)
+  kyc/ refunds/ audit/          one directory per workflow (queue page + detail page)
   api/                          HTTP boundary: thin route handlers only
 components/                     DataTable, FilterBar, DetailLayout, ActionBar, AuditTrail, StatusBadge
 lib/
   services/                     business rules, authorization, audit writes, data access
   auth/permissions.ts           role → permission map, single source of truth
   client/                       apiClient, session/role context, useResource
-  devin/client.ts               server-side Devin API client
   db.ts, seed.ts                SQLite schema and seeded fake data
 ```
 
@@ -59,7 +53,7 @@ Layering is **page → apiClient → HTTP route → service → SQLite**, with t
 That makes the service layer the seam to reality: pointing the UI at existing KYC/refunds REST services means
 rewriting those functions (or `NEXT_PUBLIC_API_BASE_URL`), not the UI.
 
-Adding a fourth tool is: one service module, two route handlers, a queue page, a detail page, and a couple of
+Adding a third tool is: one service module, two route handlers, a queue page, a detail page, and a couple of
 permission strings. Presentation, role gating and auditing come for free.
 
 ## Roles
@@ -71,8 +65,6 @@ permission strings. Presentation, role gating and auditing come for free.
 | Approve a **HIGH** risk KYC case (analysts may still reject or escalate) | no | yes |
 | Act on an **escalated** KYC case, reassign ownership | no | yes |
 | Approve refunds above $500 | no | yes |
-| Draft a tool request | yes | yes |
-| Send a tool request to Devin | no | yes |
 
 ## Not production-ready
 

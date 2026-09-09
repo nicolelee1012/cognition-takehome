@@ -8,7 +8,6 @@ import { ROLE_LABELS } from "@/lib/auth/permissions";
 const NAV = [
   { href: "/kyc", label: "KYC Reviews" },
   { href: "/refunds", label: "Refunds" },
-  { href: "/tools", label: "Tool Requests" },
   { href: "/audit", label: "Audit Log" },
 ];
 

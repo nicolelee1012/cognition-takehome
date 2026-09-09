@@ -19,13 +19,12 @@ export default function HomePage() {
   const { data } = useResource(
     async () => {
       if (!currentUser) return null;
-      const [kyc, refunds, tools, audit] = await Promise.all([
+      const [kyc, refunds, audit] = await Promise.all([
         api.listKycCases(currentUser.id, { status: "PENDING" }),
         api.listRefunds(currentUser.id, { status: "PENDING" }),
-        api.listToolRequests(currentUser.id, { status: "DRAFT" }),
         api.listAuditEvents(currentUser.id),
       ]);
-      return { kyc: kyc.length, refunds: refunds.length, tools: tools.length, audit: audit.length };
+      return { kyc: kyc.length, refunds: refunds.length, audit: audit.length };
     },
     [currentUser?.id],
   );
@@ -44,14 +43,6 @@ export default function HomePage() {
       description: "Approve or deny customer refund requests, with a manager approval limit on large amounts.",
       metricLabel: "requests pending",
       metric: data?.refunds ?? null,
-    },
-    {
-      href: "/tools",
-      name: "Tool Requests",
-      description:
-        "Ops describes the next internal tool they need; a manager hands it to Devin, which opens a pull request.",
-      metricLabel: "requests in draft",
-      metric: data?.tools ?? null,
     },
     {
       href: "/audit",

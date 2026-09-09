@@ -14,9 +14,6 @@ export type Permission =
   | "refunds.view"
   | "refunds.review"
   | "refunds.approve_large" // refunds above the analyst limit
-  | "tools.view"
-  | "tools.request" // draft a request for a new internal tool
-  | "tools.dispatch" // hand a request to Devin
   | "audit.view";
 
 export const ANALYST_REFUND_LIMIT_CENTS = 50_000;
@@ -27,8 +24,6 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "kyc.review",
     "refunds.view",
     "refunds.review",
-    "tools.view",
-    "tools.request",
     "audit.view",
   ],
   MANAGER: [
@@ -40,9 +35,6 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "refunds.view",
     "refunds.review",
     "refunds.approve_large",
-    "tools.view",
-    "tools.request",
-    "tools.dispatch",
     "audit.view",
   ],
 };

@@ -14,7 +14,6 @@ const ENTITY_OPTIONS = [
   { value: "ALL", label: "All workflows" },
   { value: "KYC_CASE", label: "KYC cases" },
   { value: "REFUND_REQUEST", label: "Refund requests" },
-  { value: "TOOL_REQUEST", label: "Tool requests" },
 ];
 
 const COLUMNS: Column<AuditEvent>[] = [

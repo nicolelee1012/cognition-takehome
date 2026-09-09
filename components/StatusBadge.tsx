@@ -13,12 +13,6 @@ const TONES: Record<string, Tone> = {
   HIGH: "negative",
   VERIFIED: "positive",
   FAILED: "negative",
-  DRAFT: "neutral",
-  DISPATCHED: "info",
-  WORKING: "info",
-  BLOCKED: "warning",
-  FINISHED: "positive",
-  EXPIRED: "neutral",
 };
 
 /** Shared status/risk chip so every workflow renders states consistently. */
