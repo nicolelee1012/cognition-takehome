@@ -3,7 +3,7 @@
 A small Next.js app showing how an engineering team can build a **portfolio** of internal fintech tools
 with normal application code instead of a no-code builder.
 
-Three workflows share one set of primitives:
+The prototype includes three workflows that share one set of primitives:
 
 - **KYC Reviews** — queue of verification cases with risk flags and documents; approve / reject / escalate /
   reassign, each requiring a reason. High-risk cases and escalated cases need a Manager.
@@ -11,9 +11,7 @@ Three workflows share one set of primitives:
 - **Tool Requests** — ops describes the next internal tool they need and a Manager hands it to Devin via the
   Devin API, which builds it in this repo's conventions and opens a pull request.
 
-Plus a cross-workflow **Audit Log**: every action is recorded with actor, timestamp, action and reason.
-
-The second workflow cost ~300 lines and no changes to any shared component — that ratio is the point.
+Plus, there is a cross-workflow **Audit Log**: every action is recorded with actor, timestamp, action and reason.
 
 ## Run it
 
