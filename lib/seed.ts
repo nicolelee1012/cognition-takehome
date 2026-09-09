@@ -1,5 +1,13 @@
 import type Database from "better-sqlite3";
-import type { DocumentStatus, KycStatus, RefundStatus, RiskLevel, Role } from "./types";
+import type {
+  DocumentStatus,
+  FeatureFlagStatus,
+  FlagEnvironment,
+  KycStatus,
+  RefundStatus,
+  RiskLevel,
+  Role,
+} from "./types";
 
 interface SeedUser {
   id: string;
@@ -54,6 +62,125 @@ const DOC_STATUSES: DocumentStatus[] = ["VERIFIED", "PENDING", "FAILED"];
 
 const REFUND_REASONS = ["DUPLICATE_CHARGE", "SERVICE_NOT_RENDERED", "FRAUD_CLAIM", "PRICING_ERROR", "GOODWILL"];
 const REFUND_STATUSES: RefundStatus[] = ["PENDING", "PENDING", "PENDING", "APPROVED", "DENIED"];
+
+const FEATURE_FLAGS: {
+  flagKey: string;
+  environment: FlagEnvironment;
+  ownerId: string;
+  status: FeatureFlagStatus;
+  rolloutPercentage: number;
+  scheduledIn: number | null;
+  changedDaysAgo: number;
+}[] = [
+  {
+    flagKey: "instant_payout_v2",
+    environment: "PRODUCTION",
+    ownerId: "u_maya",
+    status: "ON",
+    rolloutPercentage: 100,
+    scheduledIn: null,
+    changedDaysAgo: 2,
+  },
+  {
+    flagKey: "instant_payout_v2",
+    environment: "STAGING",
+    ownerId: "u_ben",
+    status: "ON",
+    rolloutPercentage: 100,
+    scheduledIn: null,
+    changedDaysAgo: 6,
+  },
+  {
+    flagKey: "kyc_document_autocheck",
+    environment: "PRODUCTION",
+    ownerId: "u_theo",
+    status: "SCHEDULED",
+    rolloutPercentage: 25,
+    scheduledIn: 2,
+    changedDaysAgo: 1,
+  },
+  {
+    flagKey: "kyc_document_autocheck",
+    environment: "DEVELOPMENT",
+    ownerId: "u_ana",
+    status: "ON",
+    rolloutPercentage: 50,
+    scheduledIn: null,
+    changedDaysAgo: 4,
+  },
+  {
+    flagKey: "refund_auto_approve_small",
+    environment: "PRODUCTION",
+    ownerId: "u_maya",
+    status: "OFF",
+    rolloutPercentage: 0,
+    scheduledIn: null,
+    changedDaysAgo: 9,
+  },
+  {
+    flagKey: "refund_auto_approve_small",
+    environment: "STAGING",
+    ownerId: "u_cara",
+    status: "ON",
+    rolloutPercentage: 75,
+    scheduledIn: null,
+    changedDaysAgo: 3,
+  },
+  {
+    flagKey: "merchant_dashboard_redesign",
+    environment: "PRODUCTION",
+    ownerId: "u_theo",
+    status: "ON",
+    rolloutPercentage: 10,
+    scheduledIn: null,
+    changedDaysAgo: 5,
+  },
+  {
+    flagKey: "merchant_dashboard_redesign",
+    environment: "DEVELOPMENT",
+    ownerId: "u_ben",
+    status: "ON",
+    rolloutPercentage: 100,
+    scheduledIn: null,
+    changedDaysAgo: 12,
+  },
+  {
+    flagKey: "sanctions_screening_v3",
+    environment: "PRODUCTION",
+    ownerId: "u_maya",
+    status: "SCHEDULED",
+    rolloutPercentage: 5,
+    scheduledIn: 7,
+    changedDaysAgo: 0,
+  },
+  {
+    flagKey: "sanctions_screening_v3",
+    environment: "STAGING",
+    ownerId: "u_ana",
+    status: "OFF",
+    rolloutPercentage: 0,
+    scheduledIn: null,
+    changedDaysAgo: 8,
+  },
+  {
+    flagKey: "ledger_double_write",
+    environment: "STAGING",
+    ownerId: "u_cara",
+    status: "ON",
+    rolloutPercentage: 100,
+    scheduledIn: null,
+    changedDaysAgo: 15,
+  },
+  {
+    flagKey: "ledger_double_write",
+    environment: "DEVELOPMENT",
+    ownerId: "u_cara",
+    status: "OFF",
+    rolloutPercentage: 0,
+    scheduledIn: null,
+    changedDaysAgo: 20,
+  },
+];
 
 function daysAgo(n: number): string {
   return new Date(Date.now() - n * 24 * 60 * 60 * 1000).toISOString();
@@ -169,6 +296,54 @@ export function seed(db: Database.Database): void {
       "Support Desk",
       "ANALYST",
       daysAgo(i % 9),
+    );
+  });
+
+  const insertFlag = db.prepare(`
+    INSERT INTO feature_flags (id, flag_key, environment, owner_id, status, rollout_percentage,
+      scheduled_for, last_changed_at, last_changed_by_name)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+  `);
+
+  FEATURE_FLAGS.forEach((flag, i) => {
+    const id = `FLG-${String(3000 + i)}`;
+    const owner = SEED_USERS.find((u) => u.id === flag.ownerId) ?? SEED_USERS[0];
+    insertFlag.run(
+      id,
+      flag.flagKey,
+      flag.environment,
+      owner.id,
+      flag.status,
+      flag.rolloutPercentage,
+      flag.scheduledIn === null ? null : daysAgo(-flag.scheduledIn),
+      daysAgo(flag.changedDaysAgo),
+      owner.name,
+    );
+    insertAudit.run(
+      `ae_seed_${id}_created`,
+      "FEATURE_FLAG",
+      id,
+      "FLAG_REGISTERED",
+      `${flag.flagKey} registered for ${flag.environment.toLowerCase()}`,
+      "system",
+      "Flag Registry",
+      "ANALYST",
+      daysAgo(flag.changedDaysAgo + 10),
+    );
+    insertAudit.run(
+      `ae_seed_${id}_action`,
+      "FEATURE_FLAG",
+      id,
+      flag.status === "ON" ? "ENABLE" : flag.status === "OFF" ? "DISABLE" : "SCHEDULE",
+      flag.status === "ON"
+        ? `Rolled out to ${flag.rolloutPercentage}% after canary looked healthy`
+        : flag.status === "OFF"
+          ? "Turned off pending an incident review"
+          : "Scheduled behind the release train",
+      owner.id,
+      owner.name,
+      owner.role,
+      daysAgo(flag.changedDaysAgo),
     );
   });
 

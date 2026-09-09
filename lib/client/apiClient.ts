@@ -1,4 +1,12 @@
-import type { AuditEvent, KycCase, ListQuery, RefundRequest, ToolRequest, User } from "@/lib/types";
+import type {
+  AuditEvent,
+  FeatureFlag,
+  KycCase,
+  ListQuery,
+  RefundRequest,
+  ToolRequest,
+  User,
+} from "@/lib/types";
 import { ACTOR_HEADER } from "@/lib/api/constants";
 
 /**
@@ -31,6 +39,7 @@ function toQueryString(query: ListQuery): string {
   if (query.search) params.set("search", query.search);
   if (query.status && query.status !== "ALL") params.set("status", query.status);
   if (query.risk && query.risk !== "ALL") params.set("risk", query.risk);
+  if (query.environment && query.environment !== "ALL") params.set("environment", query.environment);
   const qs = params.toString();
   return qs ? `?${qs}` : "";
 }
@@ -65,6 +74,24 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }).then((r) => r.refund),
+
+  listFeatureFlags: (actorId: string, query: ListQuery) =>
+    request<{ featureFlags: FeatureFlag[] }>(`/feature-flags${toQueryString(query)}`, actorId).then(
+      (r) => r.featureFlags,
+    ),
+
+  getFeatureFlag: (actorId: string, id: string) =>
+    request<{ featureFlag: FeatureFlag; auditEvents: AuditEvent[] }>(`/feature-flags/${id}`, actorId),
+
+  applyFeatureFlagAction: (
+    actorId: string,
+    id: string,
+    body: { action: string; reason: string; rolloutPercentage?: number; scheduledFor?: string },
+  ) =>
+    request<{ featureFlag: FeatureFlag }>(`/feature-flags/${id}/actions`, actorId, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }).then((r) => r.featureFlag),
 
   listToolRequests: (actorId: string, query: ListQuery) =>
     request<{ toolRequests: ToolRequest[] }>(`/tool-requests${toQueryString(query)}`, actorId).then(

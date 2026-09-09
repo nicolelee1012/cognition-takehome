@@ -14,6 +14,7 @@ const ENTITY_OPTIONS = [
   { value: "ALL", label: "All workflows" },
   { value: "KYC_CASE", label: "KYC cases" },
   { value: "REFUND_REQUEST", label: "Refund requests" },
+  { value: "FEATURE_FLAG", label: "Feature flags" },
   { value: "TOOL_REQUEST", label: "Tool requests" },
 ];
 

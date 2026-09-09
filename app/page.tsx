@@ -19,13 +19,20 @@ export default function HomePage() {
   const { data } = useResource(
     async () => {
       if (!currentUser) return null;
-      const [kyc, refunds, tools, audit] = await Promise.all([
+      const [kyc, refunds, flags, tools, audit] = await Promise.all([
         api.listKycCases(currentUser.id, { status: "PENDING" }),
         api.listRefunds(currentUser.id, { status: "PENDING" }),
+        api.listFeatureFlags(currentUser.id, { status: "ON" }),
         api.listToolRequests(currentUser.id, { status: "DRAFT" }),
         api.listAuditEvents(currentUser.id),
       ]);
-      return { kyc: kyc.length, refunds: refunds.length, tools: tools.length, audit: audit.length };
+      return {
+        kyc: kyc.length,
+        refunds: refunds.length,
+        flags: flags.length,
+        tools: tools.length,
+        audit: audit.length,
+      };
     },
     [currentUser?.id],
   );
@@ -44,6 +51,14 @@ export default function HomePage() {
       description: "Approve or deny customer refund requests, with a manager approval limit on large amounts.",
       metricLabel: "requests pending",
       metric: data?.refunds ?? null,
+    },
+    {
+      href: "/flags",
+      name: "Feature Flag Admin",
+      description:
+        "Enable, disable or schedule feature flags per environment; production changes need a manager.",
+      metricLabel: "flags on",
+      metric: data?.flags ?? null,
     },
     {
       href: "/tools",

@@ -40,6 +40,18 @@ CREATE TABLE IF NOT EXISTS refund_requests (
   original_charge_id TEXT NOT NULL
 );
 
+CREATE TABLE IF NOT EXISTS feature_flags (
+  id TEXT PRIMARY KEY,
+  flag_key TEXT NOT NULL,
+  environment TEXT NOT NULL,
+  owner_id TEXT NOT NULL REFERENCES users(id),
+  status TEXT NOT NULL,
+  rollout_percentage INTEGER NOT NULL,
+  scheduled_for TEXT,
+  last_changed_at TEXT NOT NULL,
+  last_changed_by_name TEXT NOT NULL
+);
+
 CREATE TABLE IF NOT EXISTS tool_requests (
   id TEXT PRIMARY KEY,
   title TEXT NOT NULL,

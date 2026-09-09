@@ -14,6 +14,10 @@ export type Permission =
   | "refunds.view"
   | "refunds.review"
   | "refunds.approve_large" // refunds above the analyst limit
+  | "flags.view"
+  | "flags.change" // enable / disable / schedule a flag
+  | "flags.change_production" // change a flag in the production environment
+  | "flags.request_change" // ask an owner for a change without applying it
   | "tools.view"
   | "tools.request" // draft a request for a new internal tool
   | "tools.dispatch" // hand a request to Devin
@@ -27,6 +31,8 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "kyc.review",
     "refunds.view",
     "refunds.review",
+    "flags.view",
+    "flags.request_change",
     "tools.view",
     "tools.request",
     "audit.view",
@@ -40,6 +46,10 @@ const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     "refunds.view",
     "refunds.review",
     "refunds.approve_large",
+    "flags.view",
+    "flags.change",
+    "flags.change_production",
+    "flags.request_change",
     "tools.view",
     "tools.request",
     "tools.dispatch",

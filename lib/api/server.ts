@@ -41,5 +41,6 @@ export function listQueryFrom(request: Request) {
     search: params.get("search") ?? undefined,
     status: params.get("status") ?? undefined,
     risk: params.get("risk") ?? undefined,
+    environment: params.get("environment") ?? undefined,
   };
 }

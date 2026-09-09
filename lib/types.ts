@@ -66,9 +66,25 @@ export interface ToolRequest {
   pullRequestUrl: string | null;
 }
 
+export type FlagEnvironment = "DEVELOPMENT" | "STAGING" | "PRODUCTION";
+export type FeatureFlagStatus = "ON" | "OFF" | "SCHEDULED";
+
+export interface FeatureFlag {
+  id: string;
+  flagKey: string;
+  environment: FlagEnvironment;
+  ownerId: string;
+  ownerName: string;
+  status: FeatureFlagStatus;
+  rolloutPercentage: number;
+  scheduledFor: string | null;
+  lastChangedAt: string;
+  lastChangedByName: string;
+}
+
 export interface AuditEvent {
   id: string;
-  entityType: "KYC_CASE" | "REFUND_REQUEST" | "TOOL_REQUEST";
+  entityType: "KYC_CASE" | "REFUND_REQUEST" | "TOOL_REQUEST" | "FEATURE_FLAG";
   entityId: string;
   action: string;
   reason: string;
@@ -82,4 +98,5 @@ export interface ListQuery {
   search?: string;
   status?: string;
   risk?: string;
+  environment?: string;
 }
