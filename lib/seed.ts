@@ -171,4 +171,31 @@ export function seed(db: Database.Database): void {
       daysAgo(i % 9),
     );
   });
+
+  const requester = reviewers[0];
+  db.prepare(
+    `INSERT INTO tool_requests (id, title, workflow_summary, records, actions, role_notes, status,
+       requested_by_id, created_at)
+     VALUES (?, ?, ?, ?, ?, ?, 'DRAFT', ?, ?)`,
+  ).run(
+    "TR-100001",
+    "Feature Flag Admin",
+    "Let ops turn flags on and off per environment without waiting for a deploy",
+    "Flag key, environment, owner, rollout percentage, last changed",
+    "Enable / Disable / Schedule; statuses ON, OFF, SCHEDULED",
+    "Analysts can view and request changes; Managers can change production flags",
+    requester.id,
+    daysAgo(1),
+  );
+  insertAudit.run(
+    "ae_seed_TR-100001_created",
+    "TOOL_REQUEST",
+    "TR-100001",
+    "REQUEST_CREATED",
+    "Feature Flag Admin",
+    requester.id,
+    requester.name,
+    requester.role,
+    daysAgo(1),
+  );
 }

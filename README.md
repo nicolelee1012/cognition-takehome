@@ -1,23 +1,21 @@
 # Internal Operations Console (Prototype)
 
-A ~2-hour prototype showing how a small engineering team can build and evolve a **portfolio** of internal
-fintech tools with normal application code, instead of a no-code builder.
+A small Next.js app showing how an engineering team can build a **portfolio** of internal fintech tools
+with normal application code instead of a no-code builder.
 
-It implements a **KYC Review Queue** end to end, plus a deliberately thin second workflow (**Refund
-Requests**) that reuses the same primitives — the point being that the second tool costs a few hundred
-lines, not a new platform.
+Three workflows share one set of primitives:
 
-## What it demonstrates
+- **KYC Reviews** — queue of verification cases with risk flags and documents; approve / reject / escalate /
+  reassign, each requiring a reason. High-risk cases and escalated cases need a Manager.
+- **Refunds** — approve or deny refund requests; amounts over $500 need a Manager.
+- **Tool Requests** — ops describes the next internal tool they need and a Manager hands it to Devin via the
+  Devin API, which builds it in this repo's conventions and opens a pull request.
 
-- Structured business data in queues and detail views (tables, search, filters, forms)
-- Business actions and simple workflows (approve / reject / escalate / reassign, each with a required reason)
-- Role capabilities are centrally defined and authorization is enforced server-side in the business service layer (Analyst vs Manager)
-- Auditability: every state change writes an audit event (actor, timestamp, action, reason)
-- A real API/service boundary — the UI never imports data or DB code
-- Reuse: a second workflow built from the same table / filter / detail / action / audit primitives
-- Low marginal effort to add the next internal tool
+Plus a cross-workflow **Audit Log**: every action is recorded with actor, timestamp, action and reason.
 
-## Install and run
+The second workflow cost ~300 lines and no changes to any shared component — that ratio is the point.
+
+## Run it
 
 Requires Node 20+.
 
@@ -26,122 +24,65 @@ npm install
 npm run dev          # http://localhost:3000
 ```
 
-The SQLite file is created and seeded automatically on first request at `data/console.db`.
+`data/console.db` (SQLite) is created and seeded on the first request. Switch between seeded Analysts and
+Managers with the **Acting as** selector in the top right.
 
 ```bash
-npm run db:reset     # delete the local database; it is re-seeded on next start
-npm run build        # production build
+npm run db:reset     # wipe the local database; it re-seeds on next start
+npm run build && npm start
 npm run lint
 ```
 
-Use the **Acting as** selector in the top-right to switch between seeded Analysts and Managers.
+Optional: to actually dispatch a tool request to Devin, copy `.env.example` to `.env.local` and set
+`DEVIN_API_KEY`. Everything else works without it.
 
-## Architecture
+## How it is put together
 
 ```
 app/
-  kyc/            KYC queue + case detail (workflow 1)
-  refunds/        Refund queue + request detail (workflow 2)
-  audit/          Cross-workflow audit log
-  api/            HTTP boundary: thin route handlers only
-components/       Shared UI primitives (DataTable, FilterBar, DetailLayout, ActionBar, AuditTrail, StatusBadge)
+  kyc/ refunds/ tools/ audit/   one directory per workflow (queue page + detail page)
+  api/                          HTTP boundary: thin route handlers only
+components/                     DataTable, FilterBar, DetailLayout, ActionBar, AuditTrail, StatusBadge
 lib/
-  services/       Business logic + data access (kyc, refunds, audit, users)
-  auth/           Role → permission model, single source of truth
-  client/         apiClient, session/role context, useResource hook
-  db.ts, seed.ts  SQLite schema and seeded fake data
+  services/                     business rules, authorization, audit writes, data access
+  auth/permissions.ts           role → permission map, single source of truth
+  client/                       apiClient, session/role context, useResource
+  devin/client.ts               server-side Devin API client
+  db.ts, seed.ts                SQLite schema and seeded fake data
 ```
 
-Layering: **page → apiClient → HTTP route → service → SQLite**. Components never touch the database or
-seed data; route handlers contain no business rules; services own validation, authorization and auditing.
+Layering is **page → apiClient → HTTP route → service → SQLite**, with three rules:
 
-## Shared internal-tool primitives
+1. Components never import data — the only way to a record is `lib/client/apiClient.ts`.
+2. Route handlers hold no business logic; they resolve the actor and map errors to status codes.
+3. Services own the rules, so permission checks and audit writes happen where the data changes and cannot be
+   bypassed from the browser.
 
-| Primitive | Location | Reused by |
-| --- | --- | --- |
-| `DataTable` (queue presentation) | `components/DataTable.tsx` | KYC, Refunds, Audit log |
-| `FilterBar` (search + select filters) | `components/FilterBar.tsx` | KYC, Refunds, Audit log |
-| `DetailLayout` / `Card` / `FieldList` | `components/DetailLayout.tsx` | KYC case, Refund request |
-| `ActionBar` (action + mandatory reason dialog) | `components/ActionBar.tsx` | KYC case, Refund request |
-| `StatusBadge` (status/risk chips) | `components/StatusBadge.tsx` | all workflows |
-| `AuditTrail` | `components/AuditTrail.tsx` | KYC case, Refund request |
-| Permission model (`can`, `requirePermission`) | `lib/auth/permissions.ts` | all services, all screens |
-| Audit service (`recordAuditEvent`) | `lib/services/audit.ts` | all workflows |
-| Request/response + error mapping | `lib/api/server.ts` | all API routes |
-| Data loading (`useResource`) | `lib/client/useResource.ts` | all screens |
+That makes the service layer the seam to reality: pointing the UI at existing KYC/refunds REST services means
+rewriting those functions (or `NEXT_PUBLIC_API_BASE_URL`), not the UI.
 
-Adding a third internal tool means: a table + service in `lib/services`, two route handlers, one queue page
-and one detail page — the presentation, permission, and audit behaviour come for free. These abstractions
-were extracted because two workflows actually needed them; nothing here is a generic framework.
-
-## API / service boundary
-
-- The UI calls `lib/client/apiClient.ts` only. It is the single place that knows how business data is fetched.
-- `apiClient` targets `NEXT_PUBLIC_API_BASE_URL` (default `/api`), so the local implementation can be pointed
-  at an existing KYC or refunds REST service without touching a component.
-- Route handlers under `app/api/**` are thin: resolve the actor, call a service, map errors to status codes.
-- Services in `lib/services/**` are the seam: swapping SQLite for HTTP calls to a real backend means
-  rewriting those functions and nothing else.
-
-Endpoints:
-
-| Method | Path | Purpose |
-| --- | --- | --- |
-| GET | `/api/users` | Seeded users for the role switcher |
-| GET | `/api/kyc-cases?search=&status=&risk=` | KYC queue |
-| GET | `/api/kyc-cases/:id` | Case + its audit trail |
-| POST | `/api/kyc-cases/:id/actions` | `APPROVE` / `REJECT` / `ESCALATE` / `REASSIGN` |
-| GET | `/api/refunds?search=&status=` | Refund queue |
-| GET | `/api/refunds/:id` | Request + its audit trail |
-| POST | `/api/refunds/:id/actions` | `APPROVE` / `DENY` |
-| GET | `/api/audit-events` | Cross-workflow audit log |
+Adding a fourth tool is: one service module, two route handlers, a queue page, a detail page, and a couple of
+permission strings. Presentation, role gating and auditing come for free.
 
 ## Roles
 
 | Capability | Analyst | Manager |
 | --- | --- | --- |
-| View queues and cases | yes | yes |
+| View queues, cases and the audit log | yes | yes |
 | Approve / reject / escalate standard KYC cases | yes | yes |
 | Approve a **HIGH** risk KYC case (analysts may still reject or escalate) | no | yes |
-| Act on an **escalated** KYC case | no | yes |
-| Reassign case ownership | no | yes |
-| Review refunds | yes | yes |
+| Act on an **escalated** KYC case, reassign ownership | no | yes |
 | Approve refunds above $500 | no | yes |
+| Draft a tool request | yes | yes |
+| Send a tool request to Devin | no | yes |
 
-Permissions are declared once in `lib/auth/permissions.ts` and enforced in the services (server-side);
-the UI uses the same `can()` helper to disable buttons and explain why.
+## Not production-ready
 
-## What is mocked
+A demonstration prototype — do not deploy as-is. Identity is mocked (the acting user is a dropdown sent as an
+`x-actor-id` header, no SSO), there is no real KYC vendor, payment processor or ledger behind it, and state
+lives in a single-process SQLite file of seeded fake data.
 
-- **Identity**: no SSO/auth. The acting user is chosen in a dropdown and sent as an `x-actor-id` header.
-- **Backend systems**: no real KYC vendor, payment processor or ledger. Cases, refunds, risk flags and
-  document checks are seeded fake data in local SQLite.
-- **Persistence**: a local SQLite file, seeded on first run; deleting `data/` resets everything.
-- **Workflow depth**: statuses change immediately; there are no SLAs, queues, notifications or approvals chains.
-
-## This is not production-ready
-
-This is a demonstration prototype, not a production system. Do not deploy it as-is.
-
-### Production considerations
-
-- **Identity**: real SSO/OIDC, session management, service-to-service auth; drop the `x-actor-id` header.
-- **Authorization**: security review of the permission model, per-record/tenant scoping, segregation of duties
-  and maker-checker rules; permission tests as first-class test cases.
-- **Data integration**: replace SQLite with the real KYC/refunds services over authenticated APIs, with
-  timeouts, retries, idempotency keys and PII handling (encryption at rest/in transit, field-level masking).
-- **Auditability**: append-only, tamper-evident audit storage with retention policy and export for compliance.
-- **Observability**: structured logging, metrics, tracing, alerting on failed actions and queue backlogs.
-- **Deployment**: CI/CD, migrations, environment configuration/secrets management, backups and DR.
-- **Compliance/security**: threat model, pen test, access reviews, data residency, SOC 2 / regulatory review.
-- **Quality**: automated test coverage (unit tests for services and permissions, e2e for critical flows),
-  accessibility review, error/loading state hardening.
-
-## Limitations
-
-- No pagination, sorting, bulk actions, or optimistic concurrency; queues assume small datasets.
-- No real validation of documents, sanctions lists, or risk scoring — risk flags are static seed data.
-- Audit log page filters client-side and is capped at the most recent 200 events.
-- Minimal test coverage by design; verification for this prototype was manual.
-- Styling is intentionally plain; limited mobile responsiveness; no design system.
-- SQLite writes are single-process — fine for a demo, not for concurrent reviewers.
+Also missing: pagination, sorting and concurrency control; meaningful test coverage; accessibility and mobile
+polish. Before production you would add real SSO/OIDC, a reviewed authorization model with per-record scoping
+and maker-checker rules, authenticated integrations with timeouts/retries/idempotency and PII handling,
+append-only audit storage with retention, observability, CI/CD and migrations, and a security/compliance review.

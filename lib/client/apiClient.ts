@@ -1,4 +1,4 @@
-import type { AuditEvent, KycCase, ListQuery, RefundRequest, User } from "@/lib/types";
+import type { AuditEvent, KycCase, ListQuery, RefundRequest, ToolRequest, User } from "@/lib/types";
 import { ACTOR_HEADER } from "@/lib/api/constants";
 
 /**
@@ -65,6 +65,29 @@ export const api = {
       method: "POST",
       body: JSON.stringify(body),
     }).then((r) => r.refund),
+
+  listToolRequests: (actorId: string, query: ListQuery) =>
+    request<{ toolRequests: ToolRequest[] }>(`/tool-requests${toQueryString(query)}`, actorId).then(
+      (r) => r.toolRequests,
+    ),
+
+  getToolRequest: (actorId: string, id: string) =>
+    request<{ toolRequest: ToolRequest; auditEvents: AuditEvent[] }>(`/tool-requests/${id}`, actorId),
+
+  createToolRequest: (
+    actorId: string,
+    body: { title: string; workflowSummary: string; records: string; actions: string; roleNotes: string },
+  ) =>
+    request<{ toolRequest: ToolRequest }>("/tool-requests", actorId, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }).then((r) => r.toolRequest),
+
+  dispatchToolRequest: (actorId: string, id: string, body: { reason: string }) =>
+    request<{ toolRequest: ToolRequest }>(`/tool-requests/${id}/dispatch`, actorId, {
+      method: "POST",
+      body: JSON.stringify(body),
+    }).then((r) => r.toolRequest),
 
   listAuditEvents: (actorId: string) =>
     request<{ auditEvents: AuditEvent[] }>("/audit-events", actorId).then((r) => r.auditEvents),
